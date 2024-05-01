@@ -78,6 +78,13 @@ export default function Home() {
   const [raindrops, setRaindrops] = React.useState<RainDrop[]>([]);
   const [score, setScore] = React.useState(0);
   const [gameActive, setGameActive] = React.useState(false);
+  const scoreAudioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      scoreAudioRef.current = new Audio('/ca.mp3');
+    }
+  }, []);
 
   React.useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -123,7 +130,10 @@ export default function Home() {
         if (animationProgress < 1) {
           const isCorrect = input === drop.answer;
           if (isCorrect) {
-            setScore((score) => score + 500);
+            if (scoreAudioRef.current) {
+              scoreAudioRef.current.play();
+            }
+            setScore(score + 500);
           }
           return !isCorrect;
         }
@@ -144,7 +154,18 @@ export default function Home() {
           </div>
         </div>
 
-        <div className='bg-white p-4 border-[#e2e2e2] h-[660px] overflow-hidden rounded-md border'>
+        <div className='bg-white p-4 border-[#e2e2e2] h-[660px] overflow-hidden relative rounded-md border'>
+          {!gameActive ? (
+            <div className='absolute z-10 w-full h-full top-0 right-0 bg-white opacity-90 flex items-center justify-center'>
+              <button
+                onClick={() => setGameActive(true)}
+                className='bg-[#0E91A1] text-white text-xl px-4 py-1.5 rounded'
+              >
+                Start Game
+              </button>
+            </div>
+          ) : null}
+
           <div className='bg-[#56b1c5] h-[540px] p-3 w-full overflow-hidden relative rounded-md rounded-b-none'>
             {raindrops.map((drop) => (
               <div
@@ -169,24 +190,6 @@ export default function Home() {
             />
           </div>
         </div>
-        <div className='flex justify-center gap-4 mt-4'>
-          <button
-            onClick={() => setGameActive(true)}
-            className='bg-[#0E91A1] text-white px-4 py-1.5 rounded'
-          >
-            Start
-          </button>
-
-          <button
-            onClick={() => setGameActive(!gameActive)}
-            className='bg-[#F1693C] text-white px-4 py-1.5 rounded'
-          >
-            Pause/Resume
-          </button>
-        </div>
-        <p className='mb-6 text-[#254052] opacity-75 mt-6 text-center'>
-          Made with 💜 by Onlit
-        </p>
       </div>
     </main>
   );
