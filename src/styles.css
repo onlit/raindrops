@@ -19,5 +19,17 @@ body {
 }
 
 .raindrop {
+  position: absolute;
+  top: -50px;
+  transform: translateX(-50%);
+  animation-name: fall;
+  animation-duration: 10s;
+  animation-timing-function: linear;
   border-radius: 50% 50% 50% 50%/60% 60% 40% 40%;
+}
+
+@keyframes fall {
+  to {
+    top: 100%;
+  }
 }
