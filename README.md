@@ -2,7 +2,7 @@
 
 ## Demo
 
-![alt text](https://github.com/onlit/raindrops/tree/main/public/demo.gif 'Demo')
+![demo](https://github.com/onlit/raindrops/assets/59638792/a0ae5a24-d19e-407b-a5d8-0a349fe46d85)
 
 ## Overview
 
