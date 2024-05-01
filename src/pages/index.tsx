@@ -1,146 +1,54 @@
 import React from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { Public_Sans } from 'next/font/google';
-
-type RainDrop = {
-  id: string;
-  expression: string;
-  answer: number;
-  position: number;
-  createdAt: number;
-};
+import AnswerInput from '@/components/AnswerInput/AnswerInput';
+import useRaindrops from '@/hooks/useRaindrops';
+import RainDrop from '@/types/RainDrop';
+import useAudio from '@/hooks/useAudio';
+import ScoreDisplay from '@/components/ScoreDisplay/ScoreDisplay';
+import GameControl from '@/components/GameControl/GameControl';
+import Raindrop from '@/components/Raindrop/Raindrop';
+import useTabVisibility from '@/hooks/useTabVisibility';
 
 const publicSans = Public_Sans({ subsets: ['latin'] });
-const operators = ['+', '-', 'x', '÷'];
-const padding = 36;
-const raindropWidth = 80;
-const maxWidth = 800;
-const raindropSpacing = 100; // Minimum spacing between the centers of raindrops
-
-const generateExpression = (existingDrops: RainDrop[]) => {
-  let num1 = Math.floor(Math.random() * 14) + 1;
-  let num2 = Math.floor(Math.random() * 14) + 1;
-  const operator = operators[Math.floor(Math.random() * operators.length)];
-
-  if (operator === '-' || operator === '÷') {
-    if (num1 < num2) {
-      [num1, num2] = [num2, num1]; // Ensure num1 is greater than num2
-    }
-    if (num2 === 0) num2 = 1; // Avoid division by zero
-  }
-
-  let expression = `${num1} ${operator} ${num2}`;
-
-  let answer;
-  switch (operator) {
-    case '+':
-      answer = num1 + num2;
-      break;
-    case '-':
-      answer = num1 - num2;
-      break;
-    case 'x':
-      answer = num1 * num2;
-      break;
-    case '÷':
-      answer = Math.floor(num1 / num2); // Use floor to avoid fractional answers
-      break;
-    default:
-      answer = 0;
-  }
-
-  let position = 0;
-  let validPosition = false;
-  let attempts = 0;
-  const maxAttempts = 100; // Maximum allowed attempts to find a valid position
-  const defaultCalculation = () =>
-    Math.random() * (maxWidth - raindropWidth - 2 * padding) + padding; // Function for default position
-
-  while (!validPosition && attempts < maxAttempts) {
-    position = defaultCalculation();
-    validPosition = existingDrops.every(
-      (drop) => Math.abs(drop.position - position) > raindropSpacing
-    );
-    attempts++;
-  }
-
-  if (!validPosition) {
-    console.warn(
-      'Failed to find a valid position after many attempts. Using a less restrictive default calculation.'
-    );
-    position = defaultCalculation(); // Use a less restrictive calculation for the default position.
-  }
-
-  return { id: uuidv4(), expression, answer, position, createdAt: Date.now() };
-};
 
 export default function Home() {
-  const [raindrops, setRaindrops] = React.useState<RainDrop[]>([]);
   const [score, setScore] = React.useState(0);
   const [gameActive, setGameActive] = React.useState(false);
-  const scoreAudioRef = React.useRef<HTMLAudioElement | null>(null);
 
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      scoreAudioRef.current = new Audio('/ca.mp3');
-    }
-  }, []);
+  const [raindrops, setRaindrops] = useRaindrops(gameActive);
+  const scoreAudio = useAudio('/ca.mp3');
 
-  React.useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (gameActive) {
-      interval = setInterval(() => {
-        setRaindrops((current) => [...current, generateExpression(current)]);
-      }, 2000);
-    }
-    return () => {
-      clearInterval(interval);
-    };
-  }, [gameActive]);
-
-  React.useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        console.log('false');
-        setGameActive(false); // Pause the game when tab is inactive
-      } else {
-        console.log('true');
-        setGameActive(true); // Resume the game when tab is active
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
+  useTabVisibility({
+    onHidden: () => setGameActive(false),
+    onVisible: () => setGameActive(true),
+  });
 
   const handleAnswer = (userInput: string) => {
     const input = parseInt(userInput);
     const currentTime = Date.now();
 
-    setRaindrops((current) =>
-      current.filter((drop) => {
-        // Calculate the animation progress
-        const timeElapsed = currentTime - drop.createdAt;
-        const animationDuration = 8000; // 8 seconds
-        const animationProgress = timeElapsed / animationDuration;
+    const newRainDrops = raindrops.filter((drop: RainDrop) => {
+      // Calculate the animation progress
+      const timeElapsed = currentTime - drop.createdAt;
+      const animationDuration = 8000; // 8 seconds
+      const animationProgress = timeElapsed / animationDuration;
 
-        // Only consider drops where the animation is not yet complete
-        if (animationProgress < 1) {
-          const isCorrect = input === drop.answer;
-          if (isCorrect) {
-            if (scoreAudioRef.current) {
-              scoreAudioRef.current.play();
-            }
-            setScore(score + 500);
+      // Only consider drops where the animation is not yet complete
+      if (animationProgress < 1) {
+        const isCorrect = input === drop.answer;
+        if (isCorrect) {
+          if (scoreAudio) {
+            scoreAudio.play();
           }
-          return !isCorrect;
+          setScore(score + 500);
         }
+        return !isCorrect;
+      }
 
-        return true; // Keep drops that have completed animation
-      })
-    );
+      return true; // Keep drops that have completed animation
+    });
+
+    setRaindrops(newRainDrops);
   };
 
   return (
@@ -149,45 +57,22 @@ export default function Home() {
         <div className='text-[#254052] flex justify-between items-center'>
           <h1 className='font-semibold mb-4 text-2xl'>Raindrops</h1>
 
-          <div>
-            <p>Score: {score}</p>
-          </div>
+          <ScoreDisplay score={score} />
         </div>
 
         <div className='bg-white p-4 border-[#e2e2e2] h-[660px] overflow-hidden relative rounded-md border'>
-          {!gameActive ? (
-            <div className='absolute z-10 w-full h-full top-0 right-0 bg-white opacity-90 flex items-center justify-center'>
-              <button
-                onClick={() => setGameActive(true)}
-                className='bg-[#0E91A1] text-white text-xl px-4 py-1.5 rounded'
-              >
-                Start Game
-              </button>
-            </div>
-          ) : null}
+          <GameControl
+            gameActive={gameActive}
+            onGameStart={() => setGameActive(true)}
+          />
 
           <div className='bg-[#56b1c5] h-[540px] p-3 w-full overflow-hidden relative rounded-md rounded-b-none'>
-            {raindrops.map((drop) => (
-              <div
-                key={drop.id}
-                style={{ left: `${drop.position}px` }}
-                className='bg-[#254052] flex items-center justify-center text-white font-semibold text-xl raindrop border-white border-4 w-20 h-20'
-              >
-                {drop.expression}
-              </div>
+            {raindrops.map((drop: RainDrop) => (
+              <Raindrop key={drop.id} drop={drop} />
             ))}
           </div>
           <div className='bg-[#254052] h-[90px] flex items-center justify-center rounded-md rounded-t-none'>
-            <input
-              type='number'
-              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                if (e.key === 'Enter') {
-                  handleAnswer(e.currentTarget.value);
-                  e.currentTarget.value = '';
-                }
-              }}
-              className='bg-[#2c4c61] w-[118px] h-[48px] text-white focus:outline-none focus:border-0 text-3xl text-center'
-            />
+            <AnswerInput onSubmit={handleAnswer} />
           </div>
         </div>
       </div>
