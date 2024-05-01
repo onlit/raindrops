@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background-hex: #f6f7f8;
+  --primary-hex: #56b1c5;
+  --secondary-hex: #2c4c61;
+  --dark-hex: #254052;
+  --warning-hex: #f2b945;
+}
+
+body {
+  background: var(--background-hex);
+}
+
+.raindrop {
+  border-radius: 50% 50% 50% 50%/60% 60% 40% 40%;
+}
