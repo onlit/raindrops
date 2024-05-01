@@ -70,9 +70,7 @@ const generateExpression = (existingDrops: RainDrop[]) => {
   return { id: uuidv4(), expression, answer, position, createdAt: Date.now() };
 };
 
-export default function useRaindrops(
-  gameActive: boolean
-): [RainDrop[], React.Dispatch<React.SetStateAction<RainDrop[]>>] {
+export default function useRaindrops(gameActive: boolean) {
   const [raindrops, setRaindrops] = React.useState<RainDrop[]>([]);
 
   React.useEffect(() => {
@@ -87,5 +85,5 @@ export default function useRaindrops(
     };
   }, [gameActive]);
 
-  return [raindrops, setRaindrops];
+  return [raindrops, setRaindrops] as const;
 }
