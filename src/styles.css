@@ -18,12 +18,20 @@ body {
   background: var(--background-hex);
 }
 
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
 .raindrop {
   position: absolute;
-  top: -50px;
+  top: -80px;
   transform: translateX(-50%);
   animation-name: fall;
-  animation-duration: 10s;
+  animation-duration: 8s;
   animation-timing-function: linear;
   border-radius: 50% 50% 50% 50%/60% 60% 40% 40%;
 }
